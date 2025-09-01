@@ -15,6 +15,7 @@ target("xwidget")
 					"libs/font/include",
 					"libs/mouse/include",
 					"libs/tinyjson/include/", 
+					"libs/object++/include/",
 					{public = true})
 
 	add_includedirs(

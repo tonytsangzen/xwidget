@@ -50,7 +50,7 @@ class Anim: public Widget {
 	EditLine* editLine;
 protected:
 	void onRepaint(graph_t* g, XTheme* theme, const grect_t& r) {
-		if(img == NULL || theme == NULL)
+		if(img == NULL)
 			return;
 		graph_gradation(g, r.x, r.y, r.w, r.h, 0xffffffff, 0xff00ff00, true);
 		graph_blt_alpha(img, step*(img->w/steps), 0, img->w/steps, img->h,
@@ -103,9 +103,7 @@ protected:
     void onRepaint(graph_t* g, XTheme* theme, const grect_t& r) {
         // 移除原有的背景填充代码
         // graph_fill(g, r.x, r.y, r.w, r.h, theme->basic.bgColor);
-       if(theme == NULL)
-		return;
-
+        
         float rad = angle * 3.1415926f / 180.0f; // 转换为弧度
         float cosAngle = cos(rad);
         float sinAngle = sin(rad);
@@ -164,7 +162,7 @@ protected:
 class MyWidgetWin: public WidgetWin{
 protected:
 	void onDialoged(XWin* from, int res, void* arg) {
-		Widget* w = root->get("button");
+		Widget* w = root->getChild("button");
 		LabelButton* button = (LabelButton*)w;
 		if(res == Dialog::RES_OK)
 			button->setLabel("Confirmed");
@@ -246,7 +244,7 @@ int main(int argc, char** argv) {
 	list->setScrollerH(sr);
 	root->add(sr);
 
-	win.open(&x, 0, -1, -1, 640, 480, "widgetTest", XWIN_STYLE_NORMAL);
+	win.open(&x, 0, 0, 0, 640, 480, "widgetTest", XWIN_STYLE_NORMAL);
 	win.setTimer(16);
 
 	widgetXRun(&x, &win);	

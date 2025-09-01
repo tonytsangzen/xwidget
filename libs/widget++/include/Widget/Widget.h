@@ -3,7 +3,9 @@
 
 #include <x++/XWin.h>
 #include <string.h>
+#include <tinyjson/tinyjson.h>
 #include <ewoksys/klog.h>
+#include <UniObject/UniObject.h>
 
 namespace Ewok {
 
@@ -20,7 +22,7 @@ class WidgetWin;
 class Widget;
 
 typedef void (*WidgetEventFuncT)(Widget* wd, xevent_t* evt, void* arg);
-class Widget {
+class Widget :public UniObject {
 	Widget* next;
 	Widget* prev;
 
@@ -58,7 +60,8 @@ protected:
 	virtual void onUnfocus() { }
 	virtual void onAdd() { }
 	virtual bool onEvent(xevent_t* ev);
-	virtual void setAttr(const string& attr, const string& value);
+	virtual void setAttr(const string& attr, json_var_t*value);
+	virtual json_var_t* getAttr(const string& attr);
 
 	WidgetEventFuncT onEventFunc;
 	void* onEventFuncArg;
@@ -121,7 +124,6 @@ public:
 
 	virtual gsize_t getMinSize(void);
 	void update();
-	void set(const string& attr, const string& value) { setAttr(attr, value); }
 };
 
 }

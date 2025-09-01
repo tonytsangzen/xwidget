@@ -48,6 +48,7 @@ bool  Image::loadImage(const char* fname) {
 	image = png_image_new(X::getResName(fname));
 	if(image == NULL)
 		return false;
+	update();
 	return true;
 }
 
@@ -60,10 +61,10 @@ gsize_t  Image::getMinSize(void) {
 	return sz;
 }
 
-void Image::setAttr(const string& attr, const string& value) {
+void Image::setAttr(const string& attr, json_var_t*value) {
 	Widget::setAttr(attr, value);
 	if(attr == "file") {
-		loadImage(value.c_str());
+		loadImage(json_var_get_str(value));
 	}	
 }
 
