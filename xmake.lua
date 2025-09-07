@@ -17,7 +17,6 @@ target("xwidget")
 					"libs/tinyjson/include/", 
 					"libs/object++/include/",
 					{public = true})
-
 	add_includedirs(
 					"libs/gterminal/include",
 					"libs/textgrid/include",

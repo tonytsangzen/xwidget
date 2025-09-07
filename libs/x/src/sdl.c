@@ -1,11 +1,19 @@
 #include <x/sdl_backend.h>
 #include <stdbool.h>
 
-sdl_context_t* sdl_open(const char* title, int x, int y, int w, int h, int flag){
+sdl_context_t* sdl_init(void){
 	if (SDL_Init(SDL_INIT_VIDEO) < 0) {
 		printf("SDL could not initialize! SDL_Error: %s\n", SDL_GetError());
 		return NULL;
 	}
+
+    sdl_context_t* ctx = malloc(sizeof(sdl_context_t));
+    ctx->windows = NULL; 
+    ctx->window_count = 0;
+	return ctx;
+}
+
+sdl_window_t* sdl_open(sdl_context_t* ctx, const char* title, int x, int y, int w, int h, int flag){    
 
 	SDL_Window *window = SDL_CreateWindow(title,x, y,w, h,SDL_WINDOW_SHOWN);
 	if (window == NULL) {
@@ -30,48 +38,88 @@ sdl_context_t* sdl_open(const char* title, int x, int y, int w, int h, int flag)
         SDL_Quit();
         return NULL;
     }
+    sdl_window_t* win = malloc(sizeof(sdl_window_t));
+    win->window = window;
+    win->renderer = renderer;
+    win->surface = surface;
+    win->framebuffer = malloc(w*h*4);
+    win->width = w;
+    win->height = h;
+    win->format = surface->format;
+    win->prev = NULL;
+    win->next = NULL;
 
-    sdl_context_t* ctx = malloc(sizeof(sdl_context_t));
-    ctx->window = window;
-    ctx->renderer = renderer;
-    ctx->surface = surface;
-    ctx->framebuffer = malloc(w*h*4);
-    ctx->width = w;
-    ctx->height = h;
-    ctx->format = surface->format;
-	return ctx;
+    if(ctx->windows == NULL){
+        ctx->windows = win;
+    }else{
+        sdl_window_t* cur = ctx->windows;
+        while(cur->next){
+            cur = cur->next;
+        }
+        cur->next = win;
+        win->prev = cur;
+    }
+    ctx->window_count++;
+    return win;
 }
 
 void sdl_render(sdl_context_t* ctx){
-    // 将framebuffer转换为纹理以便渲染
-    SDL_LockSurface(ctx->surface);
-    memcpy(ctx->surface->pixels, ctx->framebuffer, ctx->width * ctx->height * 4);
-    SDL_UnlockSurface(ctx->surface);
+    for(sdl_window_t* win = ctx->windows; win; win = win->next){
+        SDL_LockSurface(win->surface);
+        memcpy(win->surface->pixels, win->framebuffer, win->width * win->height * 4);
+        SDL_UnlockSurface(win->surface);
 
-
-    SDL_Texture* texture = SDL_CreateTextureFromSurface(ctx->renderer, ctx->surface);
-    if (texture == NULL) {
-        printf("纹理创建失败! SDL_Error: %s\n", SDL_GetError());
-        SDL_FreeSurface(ctx->surface);
-        SDL_DestroyRenderer(ctx->renderer);
-        SDL_DestroyWindow(ctx->window);
-        SDL_Quit();
-        return;
+        SDL_Texture* texture = SDL_CreateTextureFromSurface(win->renderer, win->surface);
+        if (texture == NULL) {
+            printf("纹理创建失败! SDL_Error: %s\n", SDL_GetError());
+            SDL_FreeSurface(win->surface);
+            SDL_DestroyRenderer(win->renderer);
+            SDL_DestroyWindow(win->window);
+            SDL_Quit();
+            return;
+        }
+        SDL_RenderClear(win->renderer);
+        SDL_RenderCopy(win->renderer, texture, NULL, NULL);
+        SDL_RenderPresent(win->renderer);
+        SDL_DestroyTexture(texture);
     }
-
-    SDL_RenderClear(ctx->renderer);
-    SDL_RenderCopy(ctx->renderer, texture, NULL, NULL);
-    SDL_RenderPresent(ctx->renderer);
-    SDL_DestroyTexture(texture);
 }
 
-void sdl_close(sdl_context_t *ctx) {
-    if(ctx){
-        free(ctx->framebuffer);
-        SDL_FreeSurface(ctx->surface);
-        SDL_DestroyRenderer(ctx->renderer);
-        SDL_DestroyWindow(ctx->window);
-        SDL_Quit();
-        free(ctx);
+sdl_window_t* sdl_get_window(sdl_context_t* ctx, int id){
+    for(sdl_window_t* w = ctx->windows; w; w = w->next){
+        if(SDL_GetWindowID(w->window) == id){
+            return w;
+        }
     }
+    return NULL;
+}
+
+void sdl_close(sdl_context_t* ctx, sdl_window_t *win) {
+    if(win->prev){
+        win->prev->next = win->next;
+    }
+    if(win->next){
+        win->next->prev = win->prev;
+    }
+    if(ctx->windows == win){
+        ctx->windows = win->next;
+    }
+    ctx->window_count--;
+    free(win->framebuffer);
+    SDL_FreeSurface(win->surface);
+    SDL_DestroyRenderer(win->renderer);
+    SDL_DestroyWindow(win->window);
+    free(win);
+}
+
+void sdl_quit(sdl_context_t* ctx) {
+    for(sdl_window_t* win = ctx->windows; win; win = win->next)
+    {
+        free(win->framebuffer);
+        SDL_FreeSurface(win->surface);
+        SDL_DestroyRenderer(win->renderer);
+        SDL_DestroyWindow(win->window);
+    }
+    free(ctx);
+    SDL_Quit();
 }

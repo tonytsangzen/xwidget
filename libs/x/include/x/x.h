@@ -28,6 +28,7 @@ typedef struct st_x {
 	x_event_t* event_head;
 	x_event_t* event_tail;
 	sdl_context_t* sdl;
+	sdl_window_t* win;
 	void (*on_loop)(void* p);
 } x_t;
 

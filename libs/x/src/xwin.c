@@ -44,12 +44,14 @@ xwin_t* xwin_open(x_t* xp, uint32_t disp_index, int x, int y, int w, int h, cons
 	r.w = w;
 	r.h = h;
 
-	xp->sdl = sdl_open(title, r.x, r.y, r.w, r.h, 0);
+	if(xp->sdl == NULL)
+		xp->sdl = sdl_init();
+	xp->win = sdl_open(xp->sdl, title, r.x, r.y, r.w, r.h, 0);
 
 	xwin_t* ret = (xwin_t*)malloc(sizeof(xwin_t));
 	memset(ret, 0, sizeof(xwin_t));
 	ret->x = xp;
-	xp->sdl->data = (void*)ret;
+	xp->win->data = (void*)ret;
 
 	key_t key = ((int64_t)(ret));
 
@@ -70,6 +72,9 @@ xwin_t* xwin_open(x_t* xp, uint32_t disp_index, int x, int y, int w, int h, cons
 
 	memcpy(&ret->xinfo->wsr, &r, sizeof(grect_t));
 	strncpy(ret->xinfo->title, title, XWIN_TITLE_MAX-1);
+	//SDL
+	ret->xinfo->wsr.x = 0;
+	ret->xinfo->wsr.y = 0;
 
 	const char* auto_max = getenv("X_AUTO_MAX");
 	if(auto_max != NULL &&
@@ -96,7 +101,7 @@ static graph_t* x_get_graph(xwin_t* xwin, graph_t* g) {
 
 	if(xwin->ws_g_shm == NULL) {
 		int w,h;
-		xwin->ws_g_shm = xwin->x->sdl->framebuffer;
+		xwin->ws_g_shm = xwin->x->win->framebuffer;
 		if(xwin->ws_g_shm == NULL)
 			return NULL;
 		if(xwin->on_resize != NULL) {
@@ -119,21 +124,19 @@ void xwin_destroy(xwin_t* xwin) {
 void xwin_close(xwin_t* xwin) {
 	if(xwin == NULL)
 		return;
-	
-	if(!xwin->x->terminated){
-		if(xwin->on_close != NULL) {
-			if(!xwin->on_close(xwin))
-				return;
-		}
-		pthread_mutex_destroy(&xwin->painting_lock);
-		if(xwin->x->main_win == xwin)
-			x_terminate(xwin->x);
 
-		if(xwin->x->prompt_win == xwin)
-			xwin->x->prompt_win = NULL;
-
-		sdl_close(xwin->x->sdl);
+	if(xwin->on_close != NULL) {
+		if(!xwin->on_close(xwin))
+			return;
 	}
+	sdl_close(xwin->x->sdl, xwin->x->win);
+	pthread_mutex_destroy(&xwin->painting_lock);
+
+	if(xwin->x->main_win == xwin)
+		x_terminate(xwin->x);
+
+	if(xwin->x->prompt_win == xwin)
+		xwin->x->prompt_win = NULL;
 }
 
 graph_t* xwin_fetch_graph(xwin_t* xwin, graph_t* g) {
@@ -220,7 +223,6 @@ int xwin_move(xwin_t* xwin, int dx, int dy) {
 int xwin_event_handle(xwin_t* xwin, xevent_t* ev) {
 	if(xwin->xinfo == NULL)
 		return -1;
-
 	if(ev->value.window.event == XEVT_WIN_CLOSE) {
 		xwin_close(xwin);
 	}

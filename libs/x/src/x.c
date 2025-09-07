@@ -14,43 +14,80 @@
 #include <stdio.h>
 #include <path.h>
 
+#define DEBUG 0
+#if DEBUG
+#define DBG(fmt, ...) printf(fmt, ##__VA_ARGS__)
+#else
+#define DBG(fmt, ...)
+#endif
+
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 #define FS_FULL_NAME_MAX 128
-	static int x_get_event(int xserv_pid, xevent_t *ev, bool block)
+	static int x_get_event(x_t *x, xevent_t *ev, bool block)
 	{
-		SDL_Event e;
+		static int _mouse_drag = 0;
+		static int _mouse_double_click = 0;
+		static long _mouse_click_ts = 0;
+
+	 	SDL_Event e;
+		if(_mouse_double_click){
+			_mouse_double_click = 0;
+			DBG("Mouse double click\n");	
+			ev->type = XEVT_MOUSE;
+			ev->state = MOUSE_STATE_CLICK;
+			return 1;
+		}
 		memset(ev, 0, sizeof(xevent_t));
 		int ret = SDL_PollEvent(&e);
 		if (ret)
 		{
+			sdl_window_t *win = sdl_get_window(x->sdl, e.window.windowID);
+			if(win == NULL)
+				return 0;
+			ev->win = win->data;
+			DBG("xwin %p\n", ev->win);
 			switch (e.type)
 			{
+			case SDL_WINDOWEVENT:
+				DBG("window event: %d\n", e.window.event);
+				if(e.window.event == SDL_WINDOWEVENT_CLOSE) {
+					ev->type = XEVT_WIN;
+					ev->state = XEVT_WIN_CLOSE;
+				}
+				break;
 			case SDL_QUIT:
-				printf("Quit\n");
+				DBG("Quit\n");
 				ev->type = XEVT_WIN;
 				ev->state = XEVT_WIN_CLOSE;
 				break;
 			case SDL_MOUSEMOTION:
-				printf("Mouse: %d %d\n", e.motion.x, e.motion.y);
+				DBG("Mouse move: %d %d\n", e.motion.x, e.motion.y);
 				ev->type = XEVT_MOUSE;
-				ev->state = MOUSE_STATE_MOVE;
+				if(_mouse_drag)
+					ev->state = MOUSE_STATE_DRAG;
+				else
+					ev->state = MOUSE_STATE_MOVE;
 				ev->value.mouse.x = e.motion.x;
 				ev->value.mouse.y = e.motion.y;
 				ev->value.mouse.rx = e.motion.xrel;
 				ev->value.mouse.ry = e.motion.yrel;
 				break;
 			case SDL_MOUSEBUTTONDOWN:
-				printf("Mouse down: %d %d %d\n", e.button.x, e.button.y, e.button.button);
+				DBG("Mouse down: %d %d %d\n", e.button.x, e.button.y, e.button.button);
 				ev->type = XEVT_MOUSE;
 				ev->state = MOUSE_STATE_DOWN;
 				ev->value.mouse.x = e.button.x;
 				ev->value.mouse.y = e.button.y;	
+				if(kernel_tic_ms() - _mouse_click_ts < 300)
+					_mouse_double_click = 1;
+				_mouse_click_ts = kernel_tic_ms();
 				switch (e.button.button)
 				{
 				case SDL_BUTTON_LEFT:
+					_mouse_drag = 1;
 					ev->value.mouse.button = MOUSE_BUTTON_LEFT;
 					break;
 				case SDL_BUTTON_RIGHT:
@@ -64,14 +101,15 @@ extern "C"
 				}
 				break;
 			case SDL_MOUSEBUTTONUP:
-			printf("Mouse down: %d %d %d\n", e.button.x, e.button.y, e.button.button);
+				DBG("Mouse up: %d %d %d\n", e.button.x, e.button.y, e.button.button);
 				ev->type = XEVT_MOUSE;
-				ev->state = MOUSE_STATE_CLICK;
+				ev->state = MOUSE_STATE_UP;
 				ev->value.mouse.x = e.button.x;
 				ev->value.mouse.y = e.button.y;	
 				switch (e.button.button)
 				{
 				case SDL_BUTTON_LEFT:
+					_mouse_drag = 0;
 					ev->value.mouse.button = MOUSE_BUTTON_LEFT;
 					break;
 				case SDL_BUTTON_RIGHT:
@@ -85,13 +123,13 @@ extern "C"
 				}
 				break;
 			case SDL_KEYDOWN:
-				printf("Key down: %d\n", e.key.keysym.sym);
+				DBG("Key down: %d\n", e.key.keysym.sym);
 				ev->type = XEVT_IM;
 				ev->state = XIM_STATE_PRESS;
 				ev->value.im.value = e.key.keysym.sym;
 				break;
 			case SDL_KEYUP:
-				printf("Key up: %d\n", e.key.keysym.sym);
+				DBG("Key up: %d\n", e.key.keysym.sym);
 				break;
 			}
 		}
@@ -100,7 +138,6 @@ extern "C"
 
 	int x_screen_info(xscreen_info_t *scr, uint32_t index)
 	{
-		printf("Todo: %s %s\n", __FILE__, __func__);
 		scr->size.w = 640;
 		scr->size.h = 480;
 		return 0;
@@ -270,10 +307,11 @@ extern "C"
 		while (!x->terminated)
 		{
 			sdl_render(x->sdl);
-			int res = x_get_event(0, &xev, block);
+			int res = x_get_event(x, &xev, block);
 			if (res)
 			{
-				xwin_t *xwin = (xwin_t*)x->sdl->data;
+				xwin_t *xwin = xev.win;
+				DBG("xwin %p, %d %d\n", xwin, xev.type, xev.state);
 				if (xev.type == XEVT_WIN)
 				{
 					xwin_event_handle(xwin, &xev);
