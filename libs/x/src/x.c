@@ -4,7 +4,6 @@
 #include <ewoksys/basic_math.h>
 #include <font/font.h>
 #include <ewoksys/proc.h>
-#include <sys/shm.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdlib.h>

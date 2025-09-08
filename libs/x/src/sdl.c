@@ -15,11 +15,13 @@ sdl_context_t* sdl_init(void){
 
 sdl_window_t* sdl_open(sdl_context_t* ctx, const char* title, int x, int y, int w, int h, int flag){    
 
-	SDL_Window *window = SDL_CreateWindow(title,x, y,w, h,SDL_WINDOW_SHOWN);
+	SDL_Window *window = SDL_CreateWindow(title, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, w, h, SDL_WINDOW_SHOWN);
 	if (window == NULL) {
 		printf("Window could not be created! SDL_Error: %s\n", SDL_GetError());
 		return NULL;
 	}
+
+    SDL_SetWindowBordered(window, SDL_TRUE);
 
     SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
     if (renderer == NULL) {

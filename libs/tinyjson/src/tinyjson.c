@@ -15,7 +15,7 @@ extern "C" {
 
 #define ARRAY_BUF 16
 
-inline void json_array_init(json_array_t* array) { 
+ void json_array_init(json_array_t* array) { 
 	array->items = NULL; 
 	array->size = 0; 
 	array->max = 0; 
@@ -27,7 +27,7 @@ json_array_t* json_array_new() {
 	return ret;
 }
 
-inline void json_array_add(json_array_t* array, void* item) {
+ void json_array_add(json_array_t* array, void* item) {
 	uint32_t new_size = array->size + 1; 
 	if(array->max <= new_size) { 
 		new_size = array->size + ARRAY_BUF;
@@ -39,7 +39,7 @@ inline void json_array_add(json_array_t* array, void* item) {
 	array->items[array->size] = NULL; 
 }
 
-inline void json_array_add_head(json_array_t* array, void* item) {
+ void json_array_add_head(json_array_t* array, void* item) {
 	uint32_t new_size = array->size + 1; 
 	if(array->max <= new_size) { 
 		new_size = array->size + ARRAY_BUF;
@@ -63,26 +63,26 @@ void* json_array_add_buf(json_array_t* array, void* s, uint32_t sz) {
 	return item;
 }
 
-inline void* json_array_get(json_array_t* array, uint32_t index) {
+ void* json_array_get(json_array_t* array, uint32_t index) {
 	if(array->items == NULL || index >= array->size)
 		return NULL;
 	return array->items[index];
 }
 
-inline void* json_array_set(json_array_t* array, uint32_t index, void* p) {
+ void* json_array_set(json_array_t* array, uint32_t index, void* p) {
 	if(array->items == NULL || index >= array->size)
 		return NULL;
 	array->items[index] = p;
 	return p;
 }
 
-inline void* json_array_head(json_array_t* array) {
+ void* json_array_head(json_array_t* array) {
 	if(array->items == NULL || array->size == 0)
 		return NULL;
 	return array->items[0];
 }
 
-inline void* json_array_remove(json_array_t* array, uint32_t index) { //remove out but not free
+ void* json_array_remove(json_array_t* array, uint32_t index) { //remove out but not free
 	if(index >= array->size)
 		return NULL;
 
@@ -97,7 +97,7 @@ inline void* json_array_remove(json_array_t* array, uint32_t index) { //remove o
 	return p;
 }
 
-inline void json_array_del(json_array_t* array, uint32_t index, free_func_t fr) { // remove out and free.
+ void json_array_del(json_array_t* array, uint32_t index, free_func_t fr) { // remove out and free.
 	void* p = json_array_remove(array, index);
 	if(p != NULL) {
 		if(fr != NULL)
@@ -107,7 +107,7 @@ inline void json_array_del(json_array_t* array, uint32_t index, free_func_t fr) 
 	}
 }
 
-inline void json_array_remove_all(json_array_t* array) { //remove all items bot not free them.
+ void json_array_remove_all(json_array_t* array) { //remove all items bot not free them.
 	if(array->items != NULL) {
 		free(array->items);
 		array->items = NULL;
@@ -115,12 +115,12 @@ inline void json_array_remove_all(json_array_t* array) { //remove all items bot 
 	array->max = array->size = 0;
 }
 
-inline void json_array_free(json_array_t* array, free_func_t fr) {
+ void json_array_free(json_array_t* array, free_func_t fr) {
 	json_array_clean(array, fr);
 	free(array);
 }
 
-inline void json_array_clean(json_array_t* array, free_func_t fr) { //remove all items and free them.
+ void json_array_clean(json_array_t* array, free_func_t fr) { //remove all items and free them.
 	if(array->items != NULL) {
 		uint32_t i;
 		for(i=0; i<array->size; i++) {
@@ -623,7 +623,7 @@ json_node_t* json_node_new(const char* name, json_var_t* var) {
 	return node;
 }
 
-static inline bool json_var_empty(json_var_t* var) {
+static  bool json_var_empty(json_var_t* var) {
 	if(var == NULL)
 		return true;
 	return false;
@@ -641,13 +641,13 @@ void json_node_free(void* p) {
 	free(node);
 }
 
-static inline bool json_node_empty(json_node_t* node) {
+static  bool json_node_empty(json_node_t* node) {
 	if(node == NULL || json_var_empty(node->var))
 		return true;
 	return false;
 }
 
-inline json_var_t* json_node_replace(json_node_t* node, json_var_t* v) {
+ json_var_t* json_node_replace(json_node_t* node, json_var_t* v) {
 	json_var_t* old = node->var;
 	//node->var = json_var_ref(json_var_clone(v));
 	node->var = json_var_ref(v);
@@ -655,12 +655,12 @@ inline json_var_t* json_node_replace(json_node_t* node, json_var_t* v) {
 	return v;
 }
 
-inline void json_var_remove_all(json_var_t* var) {
+ void json_var_remove_all(json_var_t* var) {
 	/*free children*/
 	json_array_clean(&var->children, json_node_free);
 }
 
-static inline json_node_t* json_var_find_raw(json_var_t* var, const char*name) {
+static  json_node_t* json_var_find_raw(json_var_t* var, const char*name) {
 	if(json_var_empty(var))
 		return NULL;
 
@@ -696,21 +696,21 @@ json_node_t* json_var_add_head(json_var_t* var, const char* name, json_var_t* ad
 	return json_var_add(var, name, add);
 }
 
-inline json_node_t* json_var_find(json_var_t* var, const char*name) {
+ json_node_t* json_var_find(json_var_t* var, const char*name) {
 	json_node_t* node = json_var_find_raw(var, name);
 	if(json_node_empty(node))
 		return NULL;
 	return node;
 }
 
-inline json_var_t* json_var_find_var(json_var_t* var, const char*name) {
+ json_var_t* json_var_find_var(json_var_t* var, const char*name) {
 	json_node_t* node = json_var_find(var, name);
 	if(node == NULL)
 		return NULL;
 	return node->var;
 }
 
-inline json_node_t* json_var_find_create(json_var_t* var, const char*name) {
+ json_node_t* json_var_find_create(json_var_t* var, const char*name) {
 	json_node_t* n = json_var_find(var, name);
 	if(n != NULL)
 		return n;
@@ -806,7 +806,7 @@ void json_var_array_del(json_var_t* var, int32_t index) {
 	json_array_del(&arr_var->children, index, json_node_free);
 }
 
-inline void json_var_clean(json_var_t* var) {
+ void json_var_clean(json_var_t* var) {
 	if(json_var_empty(var))
 		return;
 	/*free children*/
@@ -848,7 +848,7 @@ static const char* get_typeof(json_var_t* var) {
 	return "undefined";
 }
 
-inline json_var_t* json_var_new(void) {
+ json_var_t* json_var_new(void) {
 	json_var_t* var = NULL;
     uint32_t sz = sizeof(json_var_t);
 	var = (json_var_t*)malloc(sz);
@@ -858,7 +858,7 @@ inline json_var_t* json_var_new(void) {
 	return var;
 }
 
-static inline void json_var_free(void* p) {
+static  void json_var_free(void* p) {
   json_var_t* var = (json_var_t*)p;
   if(json_var_empty(var))
     return;
@@ -869,12 +869,12 @@ static inline void json_var_free(void* p) {
   free(var);
 }   
   
-inline json_var_t* json_var_ref(json_var_t* var) {
+ json_var_t* json_var_ref(json_var_t* var) {
   ++var->refs;
   return var;
 } 
     
-inline void json_var_unref(json_var_t* var) {
+ void json_var_unref(json_var_t* var) {
   if(json_var_empty(var))
     return;
 
@@ -888,7 +888,7 @@ inline void json_var_unref(json_var_t* var) {
   }
 }
 
-inline json_var_t* json_var_new_array(void) {
+ json_var_t* json_var_new_array(void) {
 	json_var_t* var = json_var_new_obj(NULL, NULL);
 	var->json_is_array = 1;
 	json_var_t* members = json_var_new_obj(NULL, NULL);
@@ -896,7 +896,7 @@ inline json_var_t* json_var_new_array(void) {
 	return var;
 }
 
-inline json_var_t* json_var_new_int(int i) {
+ json_var_t* json_var_new_int(int i) {
 	json_var_t* var = json_var_new();
 	var->type = JSON_V_INT;
 	var->value = malloc(sizeof(int));
@@ -904,13 +904,13 @@ inline json_var_t* json_var_new_int(int i) {
 	return var;
 }
 
-inline json_var_t* json_var_new_null(void) {
+ json_var_t* json_var_new_null(void) {
 	json_var_t* var = json_var_new();
 	var->type = JSON_V_NULL;
 	return var;
 }
 
-inline json_var_t* json_var_new_bool(bool b) {
+ json_var_t* json_var_new_bool(bool b) {
 	json_var_t* var = json_var_new();
 	var->type = JSON_V_BOOL;
 	var->value = malloc(sizeof(int));
@@ -918,7 +918,7 @@ inline json_var_t* json_var_new_bool(bool b) {
 	return var;
 }
 
-inline json_var_t* json_var_new_obj(void*p, free_func_t fr) {
+ json_var_t* json_var_new_obj(void*p, free_func_t fr) {
 	json_var_t* var = json_var_new();
 	var->type = JSON_V_OBJECT;
 	var->value = p;
@@ -926,7 +926,7 @@ inline json_var_t* json_var_new_obj(void*p, free_func_t fr) {
 	return var;
 }
 
-inline json_var_t* json_var_new_float(float i) {
+ json_var_t* json_var_new_float(float i) {
 	json_var_t* var = json_var_new();
 	var->type = JSON_V_FLOAT;
 	var->value = malloc(sizeof(float));
@@ -934,7 +934,7 @@ inline json_var_t* json_var_new_float(float i) {
 	return var;
 }
 
-inline json_var_t* json_var_new_str(const char* s) {
+ json_var_t* json_var_new_str(const char* s) {
 	json_var_t* var = json_var_new();
 	var->type = JSON_V_STRING;
 	var->size = (uint32_t)strlen(s);
@@ -943,7 +943,7 @@ inline json_var_t* json_var_new_str(const char* s) {
 	return var;
 }
 
-inline json_var_t* json_var_new_str2(const char* s, uint32_t len) {
+ json_var_t* json_var_new_str2(const char* s, uint32_t len) {
 	json_var_t* var = json_var_new();
 	var->type = JSON_V_STRING;
 	var->size = (uint32_t)strlen(s);
@@ -955,14 +955,14 @@ inline json_var_t* json_var_new_str2(const char* s, uint32_t len) {
 	return var;
 }
 
-inline const char* json_var_get_str(json_var_t* var) {
+ const char* json_var_get_str(json_var_t* var) {
 	if(var == NULL || var->value == NULL)
 		return "";
 	
 	return (const char*)var->value;
 }
 
-inline json_var_t* json_var_set_str(json_var_t* var, const char* v) {
+ json_var_t* json_var_set_str(json_var_t* var, const char* v) {
 	if(v == NULL)
 		return var;
 
@@ -975,14 +975,14 @@ inline json_var_t* json_var_set_str(json_var_t* var, const char* v) {
 	return var;
 }
 
-inline bool json_var_get_bool(json_var_t* var) {
+ bool json_var_get_bool(json_var_t* var) {
 	if(var == NULL || var->value == NULL)
 		return false;
 	int i = (int)(*(int*)var->value);
 	return i==0 ? false:true;
 }
 
-inline int json_var_get_int(json_var_t* var) {
+ int json_var_get_int(json_var_t* var) {
 	if(var == NULL || var->value == NULL)
 		return 0;
 
@@ -1001,7 +1001,7 @@ inline int json_var_get_int(json_var_t* var) {
 	return *(int*)var->value;
 }
 
-inline json_var_t* json_var_set_int(json_var_t* var, int v) {
+ json_var_t* json_var_set_int(json_var_t* var, int v) {
 	var->type = JSON_V_INT;
 	if(var->value != NULL)
 		free(var->value);
@@ -1010,7 +1010,7 @@ inline json_var_t* json_var_set_int(json_var_t* var, int v) {
 	return var;
 }
 
-inline float json_var_get_float(json_var_t* var) {
+ float json_var_get_float(json_var_t* var) {
 	if(var == NULL || var->value == NULL)
 		return 0.0;
 	
@@ -1019,7 +1019,7 @@ inline float json_var_get_float(json_var_t* var) {
 	return *(float*)var->value;
 }
 
-inline json_var_t* json_var_set_float(json_var_t* var, float v) {
+ json_var_t* json_var_set_float(json_var_t* var, float v) {
 	var->type = JSON_V_FLOAT;
 	if(var->value != NULL)
 		free(var->value);
@@ -1227,19 +1227,19 @@ float json_get_float_def(json_var_t* var, const char* name, float def) {
 	return v == NULL ? def : json_var_get_float(v);
 }
 
-inline const char* json_get_str(json_var_t* var, const char* name) {
+ const char* json_get_str(json_var_t* var, const char* name) {
 	return json_get_str_def(var, name, "");
 }
 
-inline int json_get_int(json_var_t* var, const char* name) {
+ int json_get_int(json_var_t* var, const char* name) {
 	return json_get_int_def(var, name, 0);
 }
 
-inline bool json_get_bool(json_var_t* var, const char* name) {
+ bool json_get_bool(json_var_t* var, const char* name) {
 	return json_get_bool_def(var, name, false);
 }
 
-inline float json_get_float(json_var_t* var, const char* name) {
+ float json_get_float(json_var_t* var, const char* name) {
 	return json_get_float_def(var, name, 0.0);
 }
 

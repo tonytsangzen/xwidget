@@ -1,7 +1,6 @@
 #include <x/xwin.h>
 #include <x/xcntl.h>
 #include <x/sdl_backend.h>
-#include <sys/shm.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <fcntl.h>

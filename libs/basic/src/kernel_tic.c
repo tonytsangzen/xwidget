@@ -1,5 +1,4 @@
 #include <stdint.h>
-#include <sys/time.h>
 
 #ifdef _MSC_VER
 #include <windows.h>
@@ -12,12 +11,13 @@ int32_t kernel_tic(uint32_t* sec, uint64_t* usec){
     li.LowPart = ft.dwLowDateTime;
     li.HighPart = ft.dwHighDateTime;
 
-    *us = (li.QuadPart - 116444736000000000ULL)/ 10;
-	*sec = *us / 10000000;
+    *usec = (li.QuadPart - 116444736000000000ULL)/ 10;
+	*sec = *usec / 10000000;
 
-    return us;
+    return 0;
 }
 #else
+#include <sys/time.h>
 int32_t kernel_tic(uint32_t* sec, uint64_t* usec){
    struct timeval tv;
     gettimeofday(&tv, NULL); // Get current time
