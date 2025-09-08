@@ -168,7 +168,7 @@ graph_t* png_image_new(const char* fname) {
 
     lib.png_read_end(png_ptr, info_ptr);
     */
-	graph_reverse_rgb(g);
+	//graph_reverse_rgb(g);
 
 done:   /* Clean up and return */
 	if(src != NULL)
