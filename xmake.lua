@@ -1,7 +1,7 @@
 add_rules("mode.debug", "mode.release")
 add_requires("zlib", "freetype", "libpng")
-set_encodings("utf-8")
 if is_plat("windows") then
+	set_encodings("utf-8")
 	add_requires("pthreads4w","libsdl")
 else
 	add_requires("sdl2")
