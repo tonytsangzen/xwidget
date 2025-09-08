@@ -81,8 +81,6 @@ extern "C"
 				ev->state = MOUSE_STATE_DOWN;
 				ev->value.mouse.x = e.button.x;
 				ev->value.mouse.y = e.button.y;	
-				if(kernel_tic_ms() - _mouse_click_ts < 300)
-					_mouse_double_click = 1;
 				_mouse_click_ts = kernel_tic_ms();
 				switch (e.button.button)
 				{
@@ -110,6 +108,8 @@ extern "C"
 				{
 				case SDL_BUTTON_LEFT:
 					_mouse_drag = 0;
+					if((kernel_tic_ms() - _mouse_click_ts < 300))
+						_mouse_double_click = 1;
 					ev->value.mouse.button = MOUSE_BUTTON_LEFT;
 					break;
 				case SDL_BUTTON_RIGHT:
